@@ -21,17 +21,15 @@ ENV PHP_ZIP_SHA256="8bc4e2cbfe8b17b9a269925dd005a23a9b8c07f87965b9f70a69b1420845
 ENV PHP_ZIP_URL="https://windows.php.net/downloads/releases/php-7.3.0-Win32-VC15-x64.zip"
 ENV PHP_ZIP_FILEPATH="C:\php.zip"
 ENV PHP_HOME="C:\php"
-RUN powershell -Command \
-    Invoke-WebRequest -UseBasicParsing -Uri $env:PHP_ZIP_URL -OutFile $env:PHP_ZIP_FILEPATH;
+RUN powershell -Command $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'; [System.Net.ServicePointManager]::SecurityProtocol = $AllProtocols; Invoke-WebRequest -UseBasicParsing -Uri $env:PHP_ZIP_URL -OutFile $env:PHP_ZIP_FILEPATH;
 RUN powershell -Command \
     if ((Get-FileHash $env:PHP_ZIP_FILEPATH -Algorithm sha256).Hash -ne $env:PHP_ZIP_SHA256) { exit 1 }; \
     Expand-Archive -Path $env:PHP_ZIP_FILEPATH -DestinationPath $env:PHP_HOME; \
     Remove-Item $env:PHP_ZIP_FILEPATH; \
-    Move-Item "$($env:PHP_HOME)\php.ini-development" "$($env:PHP_HOME)\php.ini";
+    Move-Item ($env:PHP_HOME + '\php.ini-development') ($env:PHP_HOME + '\php.ini');
 RUN powershell -Command \
-    $env:PATH = $env:PATH + ";" + $env:PHP_HOME; \
-    [Environment]::SetEnvironmentVariable("PATH", $env:PATH, [EnvironmentVariableTarget]::Machine);
-    # Above, in order: Download php.zip, check zip hash, unzip, remove zip, rename php.ini, get Path environment var, set php path to Path evnironment var
+    $env:PATH = $env:PATH + ';' + $env:PHP_HOME; \
+    [Environment]::SetEnvironmentVariable('PATH', $env:PATH, [EnvironmentVariableTarget]::Machine);
 
 # Configure IIS for PHP support
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/fastCGI /+[fullPath='C:\php\php-cgi.exe']
