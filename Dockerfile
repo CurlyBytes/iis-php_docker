@@ -10,7 +10,7 @@
 # https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-on-iis/install-php-and-fastcgi-support-on-server-core
 # https://www.assistanz.com/steps-to-install-php-manually-on-windows-2016-server/
 
-FROM mcr.microsoft.com/windows/servercore:ltsc2016
+FROM microsoft/windowsservercore:ltsc2016
 
 LABEL maintainer="kef7"
 
@@ -33,9 +33,13 @@ RUN powershell -Command \
     Remove-Item 'C:\php.zip'; \
     Move-Item ($env:PHP_HOME + '\php.ini-development') ($env:PHP_HOME + '\php.ini'); \
     $env:PATH = $env:PATH + ';' + $env:PHP_HOME; \
-    [Environment]::SetEnvironmentVariable('PATH', $env:PATH, [EnvironmentVariableTarget]::Machine);
+    [Environment]::SetEnvironmentVariable('PATH', $env:PATH, [EnvironmentVariableTarget]::Machine); \
+    Remove-Item -Recurse 'C:\inetpub\wwwroot\*'; \
+    New-Item 'C:\inetpub\wwwroot\phpinfo.php' -Type File; \
+    Set-Content 'C:\inetpub\wwwroot\phpinfo.php' '<?php phpinfo(); ?>';
     # ABOVE: Defien supported sec protocol versions; Set supported sec protocol versions; DL PHP zip file from php.net; Check zip file hash; Unzip file; 
-    #   Remove zip file; Move unziped data into PHP home; Contact PHP home into env PATH; Set new PATH in env
+    #   Remove zip file; Move unziped data into PHP home; Contact PHP home into env PATH; Set new PATH in env; 
+    #   Remove everything under root IIS site; Create new phpinfo.php file; Add php info code to new phpinfo.php file;
 
 # Configure IIS for PHP support by added php-cgi.exe as FastCGI module and by adding a handler for PHP files 
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/fastCGI /+[fullPath='C:\php\php-cgi.exe']
