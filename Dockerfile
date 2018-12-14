@@ -16,7 +16,7 @@ LABEL maintainer="kef7"
 
 # Install IIS and FastCGI features
 RUN powershell -Command \
-    Install-WindowsFeature -Name web-server, web-cgi;
+    Install-WindowsFeature -Name web-server, web-cgi, web-http-redirect, web-cert-auth, web-includes, web-mgmt-service;
 
 # Expose default HTTP & HTTPS port
 EXPOSE 80
@@ -27,8 +27,8 @@ ENV PHP_HOME="C:\php"
 RUN powershell -Command \
     $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'; \
     [System.Net.ServicePointManager]::SecurityProtocol = $AllProtocols; \
-    Invoke-WebRequest -UseBasicParsing -Uri 'https://windows.php.net/downloads/releases/php-7.3.0-Win32-VC15-x64.zip' -OutFile 'C:\php.zip'; \
-    if ((Get-FileHash 'C:\php.zip' -Algorithm sha256).Hash -ne '8bc4e2cbfe8b17b9a269925dd005a23a9b8c07f87965b9f70a69b1420845d065') { exit 1 }; \
+    Invoke-WebRequest -UseBasicParsing -Uri 'https://windows.php.net/downloads/releases/php-7.3.0-nts-Win32-VC15-x64.zip' -OutFile 'C:\php.zip'; \
+    if ((Get-FileHash 'C:\php.zip' -Algorithm sha256).Hash -ne '5301e3ba616d4c01cafa8a29cb833b78efeb1e840d3efffb4696a10c462a22a3') { exit 1 }; \
     Expand-Archive -Path 'C:\php.zip' -DestinationPath $env:PHP_HOME; \
     Remove-Item 'C:\php.zip'; \
     Move-Item ($env:PHP_HOME + '\php.ini-development') ($env:PHP_HOME + '\php.ini'); \
@@ -45,6 +45,8 @@ RUN powershell -Command \
 # Configure IIS for PHP support by added php-cgi.exe as FastCGI module and by adding a handler for PHP files 
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/fastCGI /+[fullPath='C:\php\php-cgi.exe']
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/handlers /+[name='PHP-FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='C:\php\php-cgi.exe',resourceType='Either']
+RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/defaultDocument /+"files.[value='index.php']"
+RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/staticContent /+[fileExtension='.php',mimeType='application/php']
 
 # Install Visual C++ Redistributable 2015 that maybe used by PHP
 ADD https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe /vc_redist.x64.exe
@@ -57,7 +59,10 @@ RUN powershell -Command \
 # Set entry point; setup docker to run ServiceMonitor.exe that will monitor IIS (w3svc)
 ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 
+COPY .\src C:\inetpub\wwwroot
+
 # DEBUG CHECKS:
-#RUN powershell -Command \
-#    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
-#    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; 
+RUN powershell -Command \
+    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
+    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
+    Get-WindowsFeature;
