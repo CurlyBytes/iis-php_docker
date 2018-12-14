@@ -36,11 +36,6 @@ RUN powershell -Command \
     [Environment]::SetEnvironmentVariable('PATH', $env:PATH, [EnvironmentVariableTarget]::Machine);
     # ABOVE: Defien supported sec protocol versions; Set supported sec protocol versions; DL PHP zip file from php.net; Check zip file hash; Unzip file; 
     #   Remove zip file; Move unziped data into PHP home; Contact PHP home into env PATH; Set new PATH in env; 
-#RUN powershell -Command \
-#    Remove-Item -Recurse -Force 'C:\inetpub\wwwroot\*'; \
-#    New-Item 'C:\inetpub\wwwroot\phpinfo.php' -Type File; \
-#    Set-Content 'C:\inetpub\wwwroot\phpinfo.php' '<?php phpinfo(); ?>';
-    #   Remove everything under root IIS site; Create new phpinfo.php file; Add php info code to new phpinfo.php file;
 
 # Configure IIS for PHP support by added php-cgi.exe as FastCGI module and by adding a handler for PHP files 
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/fastCGI /+[fullPath='C:\php\php-cgi.exe']
@@ -59,11 +54,12 @@ RUN powershell -Command \
 # Set entry point; setup docker to run ServiceMonitor.exe that will monitor IIS (w3svc)
 ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 
+# Copy example php files into image default site
 COPY ".\\src\\*" "C:\\inetpub\\wwwroot\\"
 
 # DEBUG CHECKS:
-RUN powershell -Command \
-    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
-    Test-PATH 'C:\inetpub\wwwroot'; Test-PATH 'C:\inetpub\wwwroot\index.php'; \
-    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
-    Get-WindowsFeature;
+#RUN powershell -Command \
+#    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
+#    Test-PATH 'C:\inetpub\wwwroot'; Test-PATH 'C:\inetpub\wwwroot\index.php'; \
+#    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
+#    Get-WindowsFeature;
