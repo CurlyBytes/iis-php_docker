@@ -57,6 +57,7 @@ RUN powershell -Command \
 # Set entry point; setup docker to run ServiceMonitor.exe that will monitor IIS (w3svc)
 ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 
-RUN powershell -Command \
-    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
-    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; 
+# DEBUG CHECKS:
+#RUN powershell -Command \
+#    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
+#    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; 
