@@ -5,10 +5,12 @@
 
 # NOT READY FOR THIS YET, IDK!!!
 # RESOURCES:
-# https://blog.sixeyed.com/how-to-dockerize-windows-applications/
 # https://hub.docker.com/r/microsoft/windowsservercore/
+# https://blog.sixeyed.com/how-to-dockerize-windows-applications/
 # https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-on-iis/install-php-and-fastcgi-support-on-server-core
 # https://www.assistanz.com/steps-to-install-php-manually-on-windows-2016-server/
+# https://github.com/Microsoft/iis-docker/blob/master/windowsservercore-ltsc2016/Dockerfile
+# https://windows.php.net/download/
 
 FROM microsoft/windowsservercore:ltsc2016
 
@@ -19,8 +21,7 @@ RUN powershell -Command \
     Install-WindowsFeature -Name web-server, web-cgi, web-http-redirect, web-cert-auth, web-includes, web-mgmt-service;
 
 # Expose default HTTP & HTTPS port
-EXPOSE 80
-EXPOSE 443
+EXPOSE 80 443
 
 # Download and install PHP; test hash to see if zip has been modified also
 ENV PHP_HOME="C:\php"
@@ -54,8 +55,16 @@ RUN powershell -Command \
 # Set entry point; setup docker to run ServiceMonitor.exe that will monitor IIS (w3svc)
 ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 
+# DAMMIT! TO MAP A VOLUME FOR A CONTAINER THE DIR IN THE IMAGE MUST BE EMPTY!!! WTF!!!
 # Copy example php files into image default site
 COPY ".\\src\\*" "C:\\inetpub\\wwwroot\\"
+#
+# Set default site root path as volume
+#VOLUME "C:\\inetpub\\wwwroot\\"
+
+# Remove initial files from default site so that volume can be mounted at that location
+#RUN powershell -Command \
+#    Remove-Item C:\inetpub\wwwroot\* -Recurse -Force
 
 # DEBUG CHECKS:
 #RUN powershell -Command \
