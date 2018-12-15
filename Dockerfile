@@ -3,10 +3,14 @@
 
 # NOTE: DON'T USE " USE ', IN: RUN powershell -Command $var = ''; write-host $var;
 
+# Getting, No input file specified, for *.php files when mounting new folder volumn under C:\inetpub\wwwroot\
+# - could be container's permissions to file, PHP configuration, IIS configuration, IDK
+
 # NOT READY FOR THIS YET, IDK!!!
 # RESOURCES:
 # https://hub.docker.com/r/microsoft/windowsservercore/
 # https://blog.sixeyed.com/how-to-dockerize-windows-applications/
+# https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-on-iis/install-and-configure-php
 # https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-on-iis/install-php-and-fastcgi-support-on-server-core
 # https://www.assistanz.com/steps-to-install-php-manually-on-windows-2016-server/
 # https://github.com/Microsoft/iis-docker/blob/master/windowsservercore-ltsc2016/Dockerfile
