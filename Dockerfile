@@ -22,7 +22,9 @@ LABEL maintainer="kef7"
 
 # Install IIS and FastCGI features
 RUN powershell -Command \
-    Install-WindowsFeature -Name web-server, web-cgi, web-http-redirect, web-cert-auth, web-includes, web-mgmt-service;
+    Install-WindowsFeature -Name web-server, web-cgi, web-http-redirect, web-cert-auth, web-includes, web-mgmt-service; \
+    Remove-Item C:\inetpub\wwwroot\* -Recurse -Force
+    # Remove initial files from default site so that volume can be mounted at that location
 
 # Expose default HTTP & HTTPS port
 EXPOSE 80 443
@@ -52,6 +54,13 @@ RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/st
 ADD https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe /vc_redist.x64.exe
 RUN C:\vc_redist.x64.exe /quiet /install
 
+# Copy example php files into new inetpub dir for virtual dir access later
+COPY ".\\src\\*" "C:\\inetpub\\__test\\"
+RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.applicationHost/sites /+[name='Default Web Site'].[path='/'].[path='/__test',physicalPath='C:\inetpub\__test'] /commit:apphost
+
+# Set default site root path as volume
+VOLUME "C:\\inetpub\\wwwroot\\"
+
 # Install ServiceMonitor.exe from MS to set as the entry point of this image
 RUN powershell -Command \
     Invoke-WebRequest -UseBasicParsing -Uri "https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.6/ServiceMonitor.exe" -OutFile "C:\ServiceMonitor.exe";
@@ -59,20 +68,9 @@ RUN powershell -Command \
 # Set entry point; setup docker to run ServiceMonitor.exe that will monitor IIS (w3svc)
 ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 
-# DAMMIT! TO MAP A VOLUME FOR A CONTAINER THE DIR IN THE IMAGE MUST BE EMPTY!!! WTF!!!
-# Copy example php files into image default site
-COPY ".\\src\\*" "C:\\inetpub\\wwwroot\\"
-#
-# Set default site root path as volume
-#VOLUME "C:\\inetpub\\wwwroot\\"
-
-# Remove initial files from default site so that volume can be mounted at that location
-#RUN powershell -Command \
-#    Remove-Item C:\inetpub\wwwroot\* -Recurse -Force
-
 # DEBUG CHECKS:
-#RUN powershell -Command \
-#    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
-#    Test-PATH 'C:\inetpub\wwwroot'; Test-PATH 'C:\inetpub\wwwroot\index.php'; \
-#    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
-#    Get-WindowsFeature;
+RUN powershell -Command \
+    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
+    Test-PATH 'C:\inetpub\wwwroot'; Test-PATH 'C:\inetpub\wwwroot\index.php'; \
+    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
+    Get-WindowsFeature;
