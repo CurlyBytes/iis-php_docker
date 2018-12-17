@@ -62,9 +62,6 @@ ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 # DAMMIT! TO MAP A VOLUME FOR A CONTAINER THE DIR IN THE IMAGE MUST BE EMPTY!!! WTF!!!
 # Copy example php files into image default site
 COPY ".\\src\\*" "C:\\inetpub\\wwwroot\\"
-#
-# Set default site root path as volume
-#VOLUME "C:\\inetpub\\wwwroot\\"
 
 # Remove initial files from default site so that volume can be mounted at that location
 #RUN powershell -Command \
