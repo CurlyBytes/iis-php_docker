@@ -25,7 +25,7 @@ RUN powershell -Command \
     Install-WindowsFeature -Name web-server, web-cgi, web-http-redirect, web-cert-auth, web-includes, web-mgmt-service;
 
 # Expose default HTTP & HTTPS port
-EXPOSE 80 443
+EXPOSE 80 443 8172
 
 # Download and install PHP; test hash to see if zip has been modified also
 ENV PHP_HOME="C:\php"
@@ -58,7 +58,7 @@ RUN powershell -Command \
 
 # Copy example php files into new inetpub dir for virtual dir access later
 COPY ".\\src\\*" "C:\\inetpub\\__test\\"
-RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.applicationHost/sites /+[name='Default Web Site'].[path='/'].[path='/__test',physicalPath='C:\inetpub\__test'] /commit:apphost
+RUN %WinDir%\System32\InetSrv\appcmd.exe add vdir /app.name:"Default Web Site/" /path:"/__test" /physicalPath:"C:\inetpub\__test"
 
 # Install ServiceMonitor.exe from MS to set as the entry point of this image
 RUN powershell -Command \
@@ -68,8 +68,10 @@ RUN powershell -Command \
 ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 
 # DEBUG CHECKS:
-#RUN powershell -Command \
-#    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
-#    Test-PATH 'C:\inetpub\wwwroot'; Test-PATH 'C:\inetpub\wwwroot\index.php'; \
-#    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
-#    Get-WindowsFeature;
+RUN powershell -Command \
+    Write-Host >Env Var PATH: ;Write-Host $env:PATH; \
+    Write-Host >PHP CGI EXE: ; Test-Path 'C:\php\php-cgi.exe'; \
+    Write-Host >SvcMon EXE: ; Test-Path 'C:\ServiceMonitor.exe'; \
+    Write-Host >Test VD Index: ; Test-PATH 'C:\inetpub\__test\index.php'; \
+    Write-Host >App Host Config:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
+    Write-Host >Win Features:; Get-WindowsFeature;
