@@ -1,21 +1,6 @@
 # BUILD WTIH CMD (from where Dockerfile is): 
 # > docker build -t kef7/iis-php .
 
-# NOTE: DON'T USE " USE ', IN: RUN powershell -Command $var = ''; write-host $var;
-
-# Getting, No input file specified, for *.php files when mounting new folder volumn under C:\inetpub\wwwroot\
-# - could be container's permissions to file, PHP configuration, IIS configuration, IDK
-
-# NOT READY FOR THIS YET, IDK!!!
-# RESOURCES:
-# https://hub.docker.com/r/microsoft/windowsservercore/
-# https://blog.sixeyed.com/how-to-dockerize-windows-applications/
-# https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-on-iis/install-and-configure-php
-# https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-on-iis/install-php-and-fastcgi-support-on-server-core
-# https://www.assistanz.com/steps-to-install-php-manually-on-windows-2016-server/
-# https://github.com/Microsoft/iis-docker/blob/master/windowsservercore-ltsc2016/Dockerfile
-# https://windows.php.net/download/
-
 FROM microsoft/windowsservercore:ltsc2016
 
 LABEL maintainer="kef7"
@@ -57,10 +42,6 @@ RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/st
 ADD https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe /vc_redist.x64.exe
 RUN C:\vc_redist.x64.exe /quiet /install
 
-# Remove initial files from default site so that volume can be mounted at that location
-RUN powershell -Command \
-    Remove-Item C:\inetpub\wwwroot\* -Recurse -Force
-
 # Install ServiceMonitor.exe from MS to set as the entry point of this image
 RUN powershell -Command \
     Invoke-WebRequest -UseBasicParsing -Uri "https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.6/ServiceMonitor.exe" -OutFile "C:\ServiceMonitor.exe";
@@ -70,10 +51,3 @@ ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 
 # Set default site root path as volume
 VOLUME "C:\\inetpub\\wwwroot\\"
-
-# DEBUG CHECKS:
-#RUN powershell -Command \
-#    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
-#    Test-PATH 'C:\inetpub\wwwroot'; Test-PATH 'C:\inetpub\wwwroot\index.php'; \
-#    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
-#    Get-WindowsFeature;
