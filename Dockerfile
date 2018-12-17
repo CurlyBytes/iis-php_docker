@@ -27,7 +27,7 @@ RUN powershell -Command \
     # Remove initial files from default site so that volume can be mounted at that location
 
 # Expose default HTTP & HTTPS port
-EXPOSE 80 443
+EXPOSE 80 443 8172
 
 # Download and install PHP; test hash to see if zip has been modified also
 ENV PHP_HOME="C:\php"
@@ -54,6 +54,10 @@ RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/st
 ADD https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe /vc_redist.x64.exe
 RUN C:\vc_redist.x64.exe /quiet /install
 
+# Remove initial files from default site so that volume can be mounted at that location
+RUN powershell -Command \
+    Remove-Item C:\inetpub\wwwroot\* -Recurse -Force
+
 # Install ServiceMonitor.exe from MS to set as the entry point of this image
 RUN powershell -Command \
     Invoke-WebRequest -UseBasicParsing -Uri "https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.6/ServiceMonitor.exe" -OutFile "C:\ServiceMonitor.exe";
@@ -65,8 +69,8 @@ ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 VOLUME "C:\\inetpub\\wwwroot\\"
 
 # DEBUG CHECKS:
-RUN powershell -Command \
-    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
-    Test-PATH 'C:\inetpub\wwwroot'; Test-PATH 'C:\inetpub\wwwroot\index.php'; \
-    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
-    Get-WindowsFeature;
+#RUN powershell -Command \
+#    Write-Host $env:PATH; Test-Path 'C:\php\php-cgi.exe'; Test-Path 'C:\ServiceMonitor.exe'; \
+#    Test-PATH 'C:\inetpub\wwwroot'; Test-PATH 'C:\inetpub\wwwroot\index.php'; \
+#    Write-Host APP CONFIG:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
+#    Get-WindowsFeature;
