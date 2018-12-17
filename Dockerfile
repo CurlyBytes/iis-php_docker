@@ -43,9 +43,12 @@ RUN powershell -Command \
     #   Remove zip file; Move unziped data into PHP home; Contact PHP home into env PATH; Set new PATH in env; 
 
 # Configure IIS for PHP support by added php-cgi.exe as FastCGI module and by adding a handler for PHP files 
-RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/fastCGI /+[fullPath='C:\php\php-cgi.exe']
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/handlers /+[name='PHP-FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='C:\php\php-cgi.exe',resourceType='Either']
-RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/defaultDocument /+"files.[value='index.php']"
+RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='C:\php\php-cgi.exe']
+RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].instanceMaxRequests:10000 
+RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].environmentVariables.[name='PHP_FCGI_MAX_REQUESTS',value='10000'] 
+RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].environmentVariables.[name='PHPRC',value='C:\php'] 
+RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/defaultDocument /enabled:true /+files.[value='index.php']
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/staticContent /+[fileExtension='.php',mimeType='application/php']
 
 # Install Visual C++ Redistributable 2015 that maybe used by PHP
@@ -56,7 +59,7 @@ RUN C:\vc_redist.x64.exe /quiet /install
 RUN powershell -Command \
     Remove-Item C:\inetpub\wwwroot\* -Recurse -Force
 
-# Copy example php files into new inetpub dir for virtual dir access later
+# Copy example php files into new dir, then config IIS to set dir as virtual dir for default site
 COPY ".\\src\\*" "C:\\inetpub\\__test\\"
 RUN %WinDir%\System32\InetSrv\appcmd.exe add vdir /app.name:"Default Web Site/" /path:"/__test" /physicalPath:"C:\inetpub\__test"
 
