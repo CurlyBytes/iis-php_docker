@@ -54,19 +54,15 @@ RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/st
 ADD https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe /vc_redist.x64.exe
 RUN C:\vc_redist.x64.exe /quiet /install
 
-# Copy example php files into new inetpub dir for virtual dir access later
-COPY ".\\src\\*" "C:\\inetpub\\__test\\"
-RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.applicationHost/sites /+[name='Default Web Site'].[path='/'].[path='/__test',physicalPath='C:\inetpub\__test'] /commit:apphost
-
-# Set default site root path as volume
-VOLUME "C:\\inetpub\\wwwroot\\"
-
 # Install ServiceMonitor.exe from MS to set as the entry point of this image
 RUN powershell -Command \
     Invoke-WebRequest -UseBasicParsing -Uri "https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.6/ServiceMonitor.exe" -OutFile "C:\ServiceMonitor.exe";
 
 # Set entry point; setup docker to run ServiceMonitor.exe that will monitor IIS (w3svc)
 ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
+
+# Set default site root path as volume
+VOLUME "C:\\inetpub\\wwwroot\\"
 
 # DEBUG CHECKS:
 RUN powershell -Command \
