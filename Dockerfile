@@ -27,7 +27,12 @@ RUN powershell -Command \
     Set-Service -name WMSVC  -StartupType Automatic; \
     Start-service WMSVC; \
     Remove-Item C:\inetpub\wwwroot\* -Recurse -Force; 
-    # Remove initial files from default site so that volume can be mounted at that location
+    # Above: Install IIS and IIS features; Enable remote IIS remote mgmt; Set IIS remote mgmt service to start automatically;
+    #   Start IIS remote mgmt; Remove default site files so that volume can be mounted at that location
+
+# Create new user for IIS remote mgmt use
+RUN net user iisadmin iisadminpw /add
+RUN net localgroup administrators iisadmin /add
 
 # Expose default HTTP & HTTPS port
 EXPOSE 80 443 8172
