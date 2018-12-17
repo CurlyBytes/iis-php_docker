@@ -47,9 +47,9 @@ RUN powershell -Command \
 # Configure IIS for PHP support by added php-cgi.exe as FastCGI module and by adding a handler for PHP files 
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/handlers /+[name='PHP-FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='C:\php\php-cgi.exe',resourceType='Either']
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='C:\php\php-cgi.exe']
-RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].instanceMaxRequests:10000 
 RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].environmentVariables.[name='PHP_FCGI_MAX_REQUESTS',value='10000'] 
 RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].environmentVariables.[name='PHPRC',value='C:\php'] 
+RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /[fullPath='c:\php\php-cgi.exe'].instanceMaxRequests:10000 
 RUN %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/defaultDocument /enabled:true /+files.[value='index.php']
 RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/staticContent /+[fileExtension='.php',mimeType='application/php']
 
@@ -69,10 +69,10 @@ RUN powershell -Command \
 ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 
 # DEBUG CHECKS:
-RUN powershell -Command \
-    Write-Host >Env Var PATH: ;Write-Host $env:PATH; \
-    Write-Host >PHP CGI EXE: ; Test-Path 'C:\php\php-cgi.exe'; \
-    Write-Host >SvcMon EXE: ; Test-Path 'C:\ServiceMonitor.exe'; \
-    Write-Host >Test VD Index: ; Test-PATH 'C:\inetpub\__test\index.php'; \
-    Write-Host >App Host Config:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
-    Write-Host >Win Features:; Get-WindowsFeature;
+#RUN powershell -Command \
+#    Write-Host >Env Var PATH: ;Write-Host $env:PATH; \
+#    Write-Host >PHP CGI EXE: ; Test-Path 'C:\php\php-cgi.exe'; \
+#    Write-Host >SvcMon EXE: ; Test-Path 'C:\ServiceMonitor.exe'; \
+#    Write-Host >Test VD Index: ; Test-PATH 'C:\inetpub\__test\index.php'; \
+#    Write-Host >App Host Config:; Get-Content 'C:\windows\system32\inetsrv\config\applicationHost.config'; \
+#    Write-Host >Win Features:; Get-WindowsFeature;
