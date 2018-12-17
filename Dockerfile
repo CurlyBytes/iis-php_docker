@@ -23,7 +23,10 @@ LABEL maintainer="kef7"
 # Install IIS and FastCGI features
 RUN powershell -Command \
     Install-WindowsFeature -Name web-server, web-cgi, web-http-redirect, web-cert-auth, web-includes, web-mgmt-service; \
-    Remove-Item C:\inetpub\wwwroot\* -Recurse -Force
+    Set-ItemProperty -Path  HKLM:\SOFTWARE\Microsoft\WebManagement\Server -Name EnableRemoteManagement  -Value 1; \
+    Set-Service -name WMSVC  -StartupType Automatic; \
+    Start-service WMSVC; \
+    Remove-Item C:\inetpub\wwwroot\* -Recurse -Force; 
     # Remove initial files from default site so that volume can be mounted at that location
 
 # Expose default HTTP & HTTPS port
