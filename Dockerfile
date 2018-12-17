@@ -5,6 +5,10 @@ FROM microsoft/windowsservercore:ltsc2016
 
 LABEL maintainer="kef7"
 
+# Create new user for IIS remote mgmt use
+ARG pw="ii\$adm1nPWyes"
+RUN echo #-iisadmin-password: %pw% & net user iisadmin %pw% /add && net localgroup administrators iisadmin /add
+
 # Install IIS and FastCGI features
 RUN powershell -Command \
     Install-WindowsFeature -Name web-server, web-cgi, web-http-redirect, web-cert-auth, web-includes, web-mgmt-service; \
@@ -12,7 +16,8 @@ RUN powershell -Command \
     Set-Service -name WMSVC  -StartupType Automatic; \
     Start-service WMSVC; \
     Remove-Item C:\inetpub\wwwroot\* -Recurse -Force; 
-    # Remove initial files from default site so that volume can be mounted at that location
+    # Above: Install IIS and IIS features; Enable remote IIS remote mgmt; Set IIS remote mgmt service to start automatically;
+    #   Start IIS remote mgmt; Remove default site files so that volume can be mounted at that location
 
 # Expose default HTTP & HTTPS port
 EXPOSE 80 443 8172
