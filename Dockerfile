@@ -1,5 +1,5 @@
 # BUILD WTIH CMD (from where Dockerfile is): 
-# > docker build -t kef7/iis-php .
+# > docker build -t kef7/iis-php:dev .
 
 # NOTE: DON'T USE " USE ', IN: RUN powershell -Command $var = ''; write-host $var;
 
@@ -22,7 +22,9 @@ LABEL maintainer="kef7"
 
 # Install IIS and FastCGI features
 RUN powershell -Command \
-    Install-WindowsFeature -Name web-server, web-cgi, web-http-redirect, web-cert-auth, web-includes, web-mgmt-service;
+    Install-WindowsFeature -Name web-server, web-cgi, web-http-redirect, web-cert-auth, web-includes, web-mgmt-service; \
+    Remove-Item C:\inetpub\wwwroot\* -Recurse -Force
+    # Remove initial files from default site so that volume can be mounted at that location
 
 # Expose default HTTP & HTTPS port
 EXPOSE 80 443 8172
@@ -54,10 +56,6 @@ RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/st
 # Install Visual C++ Redistributable 2015 that maybe used by PHP
 ADD https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe /vc_redist.x64.exe
 RUN C:\vc_redist.x64.exe /quiet /install
-
-# Remove initial files from default site so that volume can be mounted at that location
-RUN powershell -Command \
-    Remove-Item C:\inetpub\wwwroot\* -Recurse -Force
 
 # Copy example php files into new dir, then config IIS to set dir as virtual dir for default site
 COPY ".\\src\\*" "C:\\inetpub\\__test\\"
