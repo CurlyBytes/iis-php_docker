@@ -76,6 +76,15 @@ RUN powershell -Command \
 # Set entry point; setup docker to run ServiceMonitor.exe that will monitor IIS (w3svc)
 ENTRYPOINT [ "C:\\ServiceMonitor.exe", "w3svc" ]
 
+# Fix issues with PHP read/write to volumes by adding another abstraction in the form of a mapped drive
+# THANKS: https://blog.sixeyed.com/docker-volumes-on-windows-the-case-of-the-g-drive/
+#VOLUME "C:\\inetpub\\wwwroot"
+#RUN powershell -Command \
+#    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\DOS Devices' -Name 'G:' -Value "\??\C:\inetpub\wwwroot" -Type String; 
+#RUN %WinDir%\System32\InetSrv\appcmd.exe set app "Default Web Site/" /[@start].physicalpath:"G:\\" && \
+#    icacls "C:\\inetpub\\wwwroot" /grant IIS_IUSRS:M && \
+#    icacls "G:\\" /grant IIS_IUSRS:M
+
 # DEBUG CHECKS:
 #RUN powershell -Command \
 #    Write-Host >Env Var PATH: ;Write-Host $env:PATH; \
