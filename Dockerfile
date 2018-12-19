@@ -40,7 +40,7 @@ RUN powershell -Command `
 EXPOSE 80 443 8172
 
 # Download and install PHP; test hash to see if zip has been modified also
-ENV PHP_HOME="C:/php"
+ENV PHP_HOME="C:\php"
 RUN powershell -Command `
     $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'; `
     [System.Net.ServicePointManager]::SecurityProtocol = $AllProtocols; `
