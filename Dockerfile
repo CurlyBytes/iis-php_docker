@@ -65,7 +65,7 @@ RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/ha
     %WinDir%\System32\InetSrv\appcmd.exe add vdir /app.name:"Default Web Site/" /path:"/__test" /physicalPath:"C:\inetpub\__test"
 
 # Copy example php files into __test virtual directory
-COPY [ "src/*", "C:/inetpub/__test/" ]
+COPY [ "src*", "C:/inetpub/__test/" ]
 
 # Install Visual C++ Redistributable 2015 that maybe used by PHP
 ADD [ "https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe", "C:/vc_redist.x64.exe" ]
