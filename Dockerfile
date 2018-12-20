@@ -8,7 +8,7 @@
 
 FROM microsoft/windowsservercore:ltsc2016
 
-LABEL name="kef7/iis-php" tag="dev" version="1.1.0" maintainer="kef7"
+LABEL name="kef7/iis-php" tag="dev" version="1.2.0" maintainer="kef7"
 
 # Create new user for IIS remote mgmt use
 ARG pw="ii`$adm1nPWyes"
