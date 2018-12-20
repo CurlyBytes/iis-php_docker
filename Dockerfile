@@ -5,7 +5,7 @@
 
 FROM microsoft/windowsservercore:ltsc2016
 
-LABEL name="kef7/iis-php" tag="latest" version="1.1.0" maintainer="kef7"
+LABEL name="kef7/iis-php" tag="latest" version="1.2.0" maintainer="kef7"
 
 # Create new user for IIS remote mgmt use
 ARG pw="ii`$adm1nPWyes"
@@ -26,11 +26,12 @@ EXPOSE 80 443 8172
 
 # Download and install PHP; test hash to see if zip has been modified also
 ENV PHP_HOME="C:\php"
+COPY [ "build-files/php-7.3.0-Win32-VC15-x64.zip", "C:/php.zip" ]
 RUN powershell -Command `
-    $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'; `
-    [System.Net.ServicePointManager]::SecurityProtocol = $AllProtocols; `
-    Invoke-WebRequest -UseBasicParsing -Uri 'https://windows.php.net/downloads/releases/php-7.3.0-nts-Win32-VC15-x64.zip' -OutFile 'C:/php.zip'; `
-    if ((Get-FileHash 'C:/php.zip' -Algorithm sha256).Hash -ne '5301e3ba616d4c01cafa8a29cb833b78efeb1e840d3efffb4696a10c462a22a3') { exit 1 }; `
+    #$AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'; `
+    #[System.Net.ServicePointManager]::SecurityProtocol = $AllProtocols; `
+    #Invoke-WebRequest -UseBasicParsing -Uri 'https://windows.php.net/downloads/releases/php-7.3.0-nts-Win32-VC15-x64.zip' -OutFile 'C:/php.zip'; `
+    #if ((Get-FileHash 'C:/php.zip' -Algorithm sha256).Hash -ne '5301e3ba616d4c01cafa8a29cb833b78efeb1e840d3efffb4696a10c462a22a3') { exit 1 }; `
     Expand-Archive -Path 'C:/php.zip' -DestinationPath $env:PHP_HOME; `
     Remove-Item 'C:/php.zip'; `
     Move-Item ($env:PHP_HOME + '/php.ini-production') ($env:PHP_HOME + '/php.ini'); `
@@ -40,7 +41,8 @@ RUN powershell -Command `
     #   Remove zip file; Move unziped data into PHP home; Contact PHP home into env PATH; Set new PATH in env; 
 
 # Configure IIS for PHP support by added php-cgi.exe as FastCGI module and by adding a handler for PHP files 
-RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/handlers /+[name='PHP-FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='C:\php\php-cgi.exe',resourceType='Either'] && `
+COPY [ "build-files/php/php.ini", "C:/php/php.ini" ]
+RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/handlers /+[name='PHP-FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='C:\php\php-cgi.exe',resourceType='Either',requireAccess='Script'] && `
     %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='C:\php\php-cgi.exe'] && `
     %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].environmentVariables.[name='PHP_FCGI_MAX_REQUESTS',value='10000'] && `
     %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].environmentVariables.[name='PHPRC',value='C:\php'] && `
@@ -48,12 +50,20 @@ RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/ha
     %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/defaultDocument /enabled:true /+files.[value='index.php'] && `
     %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/staticContent /+[fileExtension='.php',mimeType='application/php']
 
-# Install Visual C++ Redistributable 2015 that maybe used by PHP
-ADD [ "https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe", "C:/vc_redist.x64.exe" ]
-RUN C:\vc_redist.x64.exe /quiet /install && del /F /Q C:\vc_redist.x64.exe
+##### - WinCache not supported in PHP 7.3 :( #####
+# Install PHP WinCache; configured in php.ini file copied over earlier
+##COPY [ "build-files/wincache-2.0.0.8-dev-7.1-nts-vc14-x64.exe", "C:/wincache.exe" ]
+##RUN C:\wincache.exe /Q /C /T:C:\php\ext
+#COPY [ "build-files/wincache*", "C:/php/ext/" ]
+
+# Install Visual C++ Redistributable 2015 that maybe used by PHP (DELETE ON RUN CMD: && del /F /Q C:\vc_redist.x64.exe)
+#ADD [ "https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe", "C:/vc_redist.x64.exe" ]
+COPY [ "build-files/vc_redist.x64.exe", "C:/vc_redist.x64.exe" ]
+RUN C:\vc_redist.x64.exe /quiet /install
 
 # Install ServiceMonitor.exe from MS to set and set as the entryp point so that it monitors IIS (w3svc)
-ADD [ "https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.6/ServiceMonitor.exe", "C:/ServiceMonitor.exe" ]
+#ADD [ "https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.6/ServiceMonitor.exe", "C:/ServiceMonitor.exe" ]
+COPY [ "build-files/ServiceMonitor.exe", "C:/ServiceMonitor.exe" ]
 ENTRYPOINT [ "C:/ServiceMonitor.exe", "w3svc" ]
 
 # Set default site root path as volume
