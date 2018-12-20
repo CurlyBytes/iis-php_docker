@@ -3,20 +3,8 @@
 # BUILD WTIH CMD (from where Dockerfile is): 
 # > docker build -t kef7/iis-php:dev .
 
-# NOTE: DON'T USE " USE ', IN: RUN powershell -Command $var = ''; write-host $var;
-
 # Getting, No input file specified, for *.php files when mounting new folder volumn under C:\inetpub\wwwroot\
 # - could be container's permissions to file, PHP configuration, IIS configuration, IDK
-
-# NOT READY FOR THIS YET, IDK!!!
-# RESOURCES:
-# https://hub.docker.com/r/microsoft/windowsservercore/
-# https://blog.sixeyed.com/how-to-dockerize-windows-applications/
-# https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-on-iis/install-and-configure-php
-# https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-on-iis/install-php-and-fastcgi-support-on-server-core
-# https://www.assistanz.com/steps-to-install-php-manually-on-windows-2016-server/
-# https://github.com/Microsoft/iis-docker/blob/master/windowsservercore-ltsc2016/Dockerfile
-# https://windows.php.net/download/
 
 FROM microsoft/windowsservercore:ltsc2016
 
@@ -56,7 +44,7 @@ RUN powershell -Command `
 
 # Configure PHP and IIS for PHP support by added php-cgi.exe as FastCGI module and by adding a handler for PHP files 
 COPY [ "build-files/php/php.ini", "C:/php/php.ini" ]
-RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/handlers /+[name='PHP-FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='C:\php\php-cgi.exe',resourceType='Either'] && `
+RUN %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/handlers /+[name='PHP-FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='C:\php\php-cgi.exe',resourceType='Either',requireAccess='Script'] && `
     %WinDir%\System32\InetSrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='C:\php\php-cgi.exe'] && `
     %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].environmentVariables.[name='PHP_FCGI_MAX_REQUESTS',value='10000'] && `
     %windir%\system32\inetsrv\appcmd.exe set config /section:system.webServer/fastCgi /+[fullPath='c:\php\php-cgi.exe'].environmentVariables.[name='PHPRC',value='C:\php'] && `
@@ -94,13 +82,13 @@ ENTRYPOINT [ "C:/ServiceMonitor.exe", "w3svc" ]
 #    icacls "G:\\" /grant IIS_IUSRS:M
 
 # DEBUG CHECKS:
-RUN powershell -Command `
-    Write-Host !!! (Get-Date); `
-    Write-Host !!! PHP INI Test: ; C:\php\php.exe --ini; `
-    Write-Host !!! PHP CGI `(Exists`): ; Test-Path 'C:/php/php-cgi.exe'; `
-    Write-Host !!! PHP WinCache `(Exists`): ; Test-Path 'C:/php/ext/php_wincache.dll'; `
-    Write-Host !!! VD Test Files `(Exists`): ; Test-PATH 'C:/inetpub/__test/index.php'; `
-    Write-Host !!! SvcMon EXE `(Exists`): ; Test-Path 'C:/ServiceMonitor.exe'; `
-    Write-Host !!! Env Var PATH: ; Write-Host $env:PATH; `
-    Write-Host !!! App Host Config: ; Get-Content 'C:/windows/system32/inetsrv/config/applicationHost.config'; `
-    Write-Host !!! Win Features: ; Get-WindowsFeature;
+#RUN powershell -Command `
+#    Write-Host !!! (Get-Date); `
+#    Write-Host !!! PHP INI Test: ; C:\php\php.exe --ini; `
+#    Write-Host !!! PHP CGI `(Exists`): ; Test-Path 'C:/php/php-cgi.exe'; `
+#    Write-Host !!! PHP WinCache `(Exists`): ; Test-Path 'C:/php/ext/php_wincache.dll'; `
+#    Write-Host !!! VD Test Files `(Exists`): ; Test-PATH 'C:/inetpub/__test/index.php'; `
+#    Write-Host !!! SvcMon EXE `(Exists`): ; Test-Path 'C:/ServiceMonitor.exe'; `
+#    Write-Host !!! Env Var PATH: ; Write-Host $env:PATH; `
+#    Write-Host !!! App Host Config: ; Get-Content 'C:/windows/system32/inetsrv/config/applicationHost.config'; `
+#    Write-Host !!! Win Features: ; Get-WindowsFeature;
